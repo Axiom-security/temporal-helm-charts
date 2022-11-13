@@ -85,24 +85,38 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            - name: ENABLE_ES
-              value: "{{ or $.Values.elasticsearch.enabled $.Values.elasticsearch.external }}"
-            - name: ES_SEEDS
-              value: "{{ $.Values.elasticsearch.host }}"
-            - name: ES_PORT
-              value: "{{ $.Values.elasticsearch.port }}"
-            - name: ES_VERSION
-              value: "{{ $.Values.elasticsearch.version }}"
-            - name: ES_SCHEME
-              value: "{{ $.Values.elasticsearch.scheme }}"
-            - name: ES_VIS_INDEX
-              value: "{{ $.Values.elasticsearch.visibilityIndex }}"
-            - name: ES_USER
-              value: "{{ $.Values.elasticsearch.username }}"
-            - name: ES_PWD
-              value: "{{ $.Values.elasticsearch.password }}"
             - name: SERVICES
               value: {{ $service }}
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.server.config.persistence.default.sql.secretName }}
+                  key: {{ $.Values.server.config.persistence.default.sql.user }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.server.config.persistence.default.sql.secretName }}
+                  key: {{ $.Values.server.config.persistence.default.sql.password }}
+            - name: POSTGRES_SEEDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $.Values.server.config.persistence.default.sql.configMapName }}
+                  key: {{ $.Values.server.config.persistence.default.sql.host }}
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $.Values.server.config.persistence.default.sql.configMapName }}
+                  key: {{ $.Values.server.config.persistence.default.sql.host }}
+            - name: POSTGRES_SSL_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $.Values.server.config.persistence.default.sql.configMapName }}
+                  key: {{ $.Values.server.config.persistence.default.sql.sslMode }}
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $.Values.server.config.persistence.default.sql.configMapName }}
+                  key: {{ $.Values.server.config.persistence.default.sql.axiom_db }}
             - name: TEMPORAL_STORE_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -113,6 +127,25 @@ spec:
                 secretKeyRef:
                   name: {{ include "temporal.persistence.secretName" (list $ "visibility") }}
                   key: {{ include "temporal.persistence.secretKey" (list $ "visibility") }}
+            - name: CLOUD_RUNNER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: "temporal-secrets"
+                  key: "cloud-runner-api-key"
+            - name: TEMPORAL_ADMIN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: "temporal-secrets"
+                  key: "temporal-admin-api-key"
+            - name: ORCHESTRATOR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: "temporal-secrets"
+                  key: "orchestrator-api-key"
+            - name: JAGGER_URL
+              value: "http://axiom-open-telemetry.monitoring.svc.cluster.local:14268/api/traces"
+            - name: SERVICE_NAME
+              value: "temporal-server"
           {{- if $.Values.server.versionCheckDisabled }}
             - name: TEMPORAL_VERSION_CHECK_DISABLED
               value: "1"
